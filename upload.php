@@ -18,8 +18,9 @@ if(!$size || $size > MAX_FILE_SIZE){
 	exit();
 }
 // 保存するファイル名
-// DBへオリジナル画像のパスを保存
 $imageFilePath = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
+
+// DBへオリジナル画像のパスを保存
 $query = "insert into image (
 	image_id, user_id, big_thumbnail, middle_thumbnail, small_thumbnail, original_image) values (
 	'', '$id', '', '', '', '$imageFilePath'
@@ -68,7 +69,7 @@ if(!$rs){
 $width = $imagesize[0];
 $height = $imagesize[1];
 
-if($width > BIG_THUMBNAIL_WIDTH){
+if($width > SMALL_THUMBNAIL_WIDTH){
 
 	// 元ファイルを画像タイプによって作る
 	switch($imagesize['mime']){
@@ -121,9 +122,10 @@ if($width > BIG_THUMBNAIL_WIDTH){
 		echo "GIF/JPEG/PNG only!";
 		exit();
 	}
-	$imageFilePath_big = BIG_THUMBNAIL_DIR . $_FILES['image']['name'];
-	$imageFilePath_middle = MIDDLE_THUMBNAIL_DIR . $_FILES['image']['name'];
-	$imageFilePath_small = SMALL_THUMBNAIL_DIR . $_FILES['image']['name'];
+	$imageFilePath_big = BIG_THUMBNAIL_DIR . $imageFileName;
+	$imageFilePath_middle = MIDDLE_THUMBNAIL_DIR . $imageFileName;
+	$imageFilePath_small = SMALL_THUMBNAIL_DIR . $imageFileName;
+	$imageFilePath_original = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
 
 	$query = "update image set big_thumbnail = '$imageFilePath_big',
 	middle_thumbnail = '$imageFilePath_middle',
@@ -132,7 +134,7 @@ if($width > BIG_THUMBNAIL_WIDTH){
 
 }
 
-// index.phpに飛ばす
+// mypage.phpに飛ばす
 header('Location: http://'.$_SERVER['SERVER_NAME'].'/tsucre/mypage.php');
 exit();
 ?>

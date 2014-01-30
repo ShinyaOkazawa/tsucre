@@ -23,18 +23,14 @@ while ($row = mysqli_fetch_assoc($query)) {
 $images = array();
 $imageDir = opendir(ORIGINAL_IMAGE_DIR);
 
-// 画像の一覧表示
+// 画像表示
 while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
 	if($file == '.' || $file == '..'){
 		continue;
 	}
-
-	if(file_exists(BIG_THUMBNAIL_DIR.'/'.$file)){
-		$images[] = 'uploads/big_thumbnail/'.$file;
-	} else if (file_exists(MIDDLE_THUMBNAIL_DIR.'/'.$file)){
-		$images[] = 'uploads/middle_thumbnail/' . $file;
-	} else {
-		$images[] = 'uploads/small_thumbnail/' . $file;
+	// profile画像の取得
+	if(file_exists(MIDDLE_THUMBNAIL_DIR.'/'.$file)){
+		$images[0] = 'uploads/small_thumbnail/'.$file;
 	}
 
 }
@@ -78,6 +74,17 @@ while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
 <section id="mypage">
 <h2>MY PAGE</h2>
 <div id="first-form-wrapper">
+<h3><span class="meta">Your</span>Avatar</h3>
+
+<form method="post" enctype="multipart/form-data" action="profile-upload.php">
+<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MAX_FILE_SIZE; ?>">
+画像のファイル名を入力してください（最大16MB）
+<input size="30" type="file" name="image">
+<input type="submit" name="upload" value="upload">
+</form>
+</div><!-- second-form-wrapper -->
+<div id="second-form-wrapper">
+<img src="<?php echo $images[0]; ?>">
 <form action="mypage.php" method="post">
 <div class="form-field">
 <fieldset class="user_name">
@@ -98,29 +105,7 @@ while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
 </div>
 </form>
 </div><!-- first-form-wrapper -->
-<div id="second-form-wrapper">
-<h3><span class="meta">Your</span>Avatar</h3>
-<img src="images/profile/profile01.jpg" height="318" width="481">
 
-<form method="post" enctype="multipart/form-data" action="upload.php">
-<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MAX_FILE_SIZE; ?>">
-画像のファイル名を入力してください（最大16MB）
-<input size="30" type="file" name="image">
-<input type="submit" name="upload" value="upload">
-<input type="reset" name="reset" value="reset">
-</form>
-</div><!-- second-form-wrapper -->
-
-</section>
-
-<section>
-<?php foreach ($images as $image) : ?>
-<?php if(strpos($image, 'uploads/small_thumbnail/') === 0) : ?>
-<a href="images/<?php echo basename($image); ?>"><img src="<?php echo $image; ?>"></a>
-<?php else : ?>
-<img src="<?php echo $image; ?>">
-<?php endif; ?>
-<?php endforeach;?>
 </section>
 
 <footer id="footer">
