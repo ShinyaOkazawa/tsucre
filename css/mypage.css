@@ -99,8 +99,14 @@ article {
 #mypage h2 {
 	font-size: 180px;
 }
-
-
+#profile {
+	width: 240px;
+	height: 240px;
+	overflow: hidden;
+}
+#clipboard h3 {
+	font-size: 120px;
+}
 /* footer **************************/
 #footer {
 	width: 960px;

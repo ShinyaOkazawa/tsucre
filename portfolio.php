@@ -1,6 +1,16 @@
 <?php
-
+require_once 'functions/config.php';
 require_once 'core/init.php';
+
+$user_id = $_SESSION['user_id'];
+
+$query = "select small_thumbnail from image where user_id = $user_id";
+$result = mysqli_query($connection, $query);
+
+$images = array();
+while($row = mysqli_fetch_assoc($result)){
+	$images[] = $row["small_thumbnail"];
+}
 
 ?>
 
@@ -41,6 +51,17 @@ require_once 'core/init.php';
 
 <article>
 <p class="page-title">PORTFOLIO</p>
+
+<form method="post" enctype="multipart/form-data" action="portfolio-upload.php">
+<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MAX_FILE_SIZE; ?>">
+画像のファイル名を入力してください（最大300KB）
+<input size="30" type="file" name="image">
+<input type="submit" name="upload" value="upload">
+</form>
+
+<?php foreach ($images as $image) : ?>
+<img src="<?php echo $image; ?>">
+<?php endforeach; ?>
 
 <footer id="footer">
 <div id="footer-left">

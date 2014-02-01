@@ -3,7 +3,7 @@ require_once 'functions/config.php';
 require_once 'core/init.php';
 
 $username = $_SESSION["username"];
-$id = $_SESSION["id"];
+$user_id = $_SESSION["user_id"];
 
 // 名前とポートフォリオのurlを変更
 if(isset($_POST["commit"])){
@@ -13,27 +13,24 @@ if(isset($_POST["commit"])){
 	mysqli_query($connection, $query);
 }
 
-$query = "select portfolio_url from users where id = $id";
+$query = "select portfolio_url from users where user_id = $user_id";
 $query = mysqli_query($connection, $query);
 while ($row = mysqli_fetch_assoc($query)) {
     $_SESSION["portfolio_url"] = $myUrl = $row["portfolio_url"];
 }
 
-// 画像の表示準備
-$images = array();
-$imageDir = opendir(ORIGINAL_IMAGE_DIR);
 
-// 画像表示
-while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
-	if($file == '.' || $file == '..'){
-		continue;
-	}
-	// profile画像の取得
-	if(file_exists(MIDDLE_THUMBNAIL_DIR.'/'.$file)){
-		$images[0] = 'uploads/small_thumbnail/'.$file;
-	}
+// usersのprofileにimage_idを挿入
+$query = "update users set profile = ".$_SESSION['image_id']. " where user_id = $user_id";
+mysqli_query($connection, $query);
 
+// usersのprofileからimageのmiddle thumbnailを取得
+$query = "select middle_thumbnail from image where image_id = (select profile from users where user_id = $user_id)";
+$query = mysqli_query($connection, $query);
+while ($row = mysqli_fetch_assoc($query)){
+	$profile = $row["middle_thumbnail"];
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -78,27 +75,21 @@ while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
 
 <form method="post" enctype="multipart/form-data" action="profile-upload.php">
 <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MAX_FILE_SIZE; ?>">
-画像のファイル名を入力してください（最大16MB）
+画像のファイル名を入力してください（最大300KB）
 <input size="30" type="file" name="image">
 <input type="submit" name="upload" value="upload">
 </form>
 </div><!-- second-form-wrapper -->
 <div id="second-form-wrapper">
-<img src="<?php echo $images[0]; ?>">
+<div id="profile">
+<img src="<?php echo $profile; ?>">
+</div>
 <form action="mypage.php" method="post">
 <div class="form-field">
 <fieldset class="user_name">
 <label for="user_name">User Name</label>
 <input id="user_name" name="username" size="30" type="text" value="<?php echo $username; ?>">
 </fieldset>
-</div>
-<div class="form-field">
-<fieldset class="user_login">
-<label for="user_login">Portfolio Title</label>
-<input autocapitalize="off" autocorrect="off" id="user_login" name="portfolio" size="30" type="text" value="<?php echo $myUrl; ?>">
-</fieldset>
-<p class="message">"Your TSUCRE URL: http://localhost/tsucre/<strong><span id="portfolio"><?php echo $myUrl; ?></span></strong>"</p>
-<p>この設定があなたのポートフォリオのURLになります。</p>
 </div>
 <div class="form-btns">
 <input class="form-sub" name="commit" type="submit" value="update Settings">
@@ -108,6 +99,10 @@ while($file = readdir($imageDir)){ // ディレクトリ内画像全取得
 
 </section>
 
+<section id="clipboard">
+<h3>CLIPBOARD</h3>
+
+</section>
 <footer id="footer">
 <div id="footer-left">
 <div id="footer-logo">

@@ -1,8 +1,8 @@
 <?php
 
-function resizeImage($connection){	
+function resizeImage($connection,$returnPage){	
 
-	$id = $_SESSION['id'];
+	$user_id = $_SESSION['user_id'];
 
 	// エラーチェック
 	if($_FILES['image']['error'] != UPLOAD_ERR_OK){
@@ -98,12 +98,22 @@ function resizeImage($connection){
 	}
 
 	// DBへ保存するパスの生成
-	$imageFilePath_big = BIG_THUMBNAIL_DIR . $imageFileName;
-	$imageFilePath_middle = MIDDLE_THUMBNAIL_DIR . $imageFileName;
-	$imageFilePath_small = SMALL_THUMBNAIL_DIR . $imageFileName;
+	$imageFilePath_big = "uploads/big_thumbnail/".$imageFileName;
+	$imageFilePath_middle = "uploads/middle_thumbnail/".$imageFileName;
+	$imageFilePath_small = "uploads/small_thumbnail/".$imageFileName;
 	$imageFilePath_original = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
 
+	// image table にレコードを追加
 	$query = "insert into image (image_id, user_id, big_thumbnail, middle_thumbnail, small_thumbnail, original_image) values (
-		'','$id','$imageFilePath_big','$imageFilePath_middle','$imageFilePath_small','$imageFilePath_original')";
+		'','$user_id','$imageFilePath_big','$imageFilePath_middle','$imageFilePath_small','$imageFilePath_original')";
 	mysqli_query($connection, $query);
+
+	// image table に最後に追加されたimage_idを取得
+	$query = "select image_id from image order by image_id desc limit 1";
+	$result = mysqli_query($connection, $query);
+	while($row = mysqli_fetch_assoc($result)){
+		$_SESSION["image_id"] = $row["image_id"];
+	}
+	
+	header("Location: http://".$_SERVER['SERVER_NAME']."/tsucre/$returnPage");
 }

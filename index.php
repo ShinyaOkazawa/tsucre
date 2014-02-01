@@ -1,7 +1,17 @@
 <?php
 
+require_once 'functions/config.php';
 require_once 'core/init.php';
 
+$user_id = $_SESSION['user_id'];
+
+$query = "select small_thumbnail from image where user_id = $user_id";
+$result = mysqli_query($connection, $query);
+
+$images = array();
+while($row = mysqli_fetch_assoc($result)){
+	$images[] = $row["small_thumbnail"];
+}
 ?>
 
 <!DOCTYPE html>
@@ -26,11 +36,11 @@ require_once 'core/init.php';
 </header>
 <div id="nav-wrapper">
 <div id="mypage">
-<a href="http://localhost/job/mypage.php">MY PAGE</a>
+<a href="http://localhost/tsucre/mypage.php">MY PAGE</a>
 </div>
 <nav id="various-nav">
 <div class="i_wrapper">
-<a href="">
+<a href="portfolio.php">
 <img src="images/i_portfolio_s_off.png" height="40" width="40">
 </a>
 </div>
@@ -57,7 +67,7 @@ require_once 'core/init.php';
 </nav>
 <nav id="global-nav">
 <ul id="global-nav-left">
-<li><a href="#">ABOUT</a></li>
+<li><a href="#about">ABOUT</a></li>
 <li><a href="#">BLOG</a></li>
 </ul>
 <ul id="global-nav-right">
@@ -753,7 +763,7 @@ require_once 'core/init.php';
 </div><!-- footer-left -->
 <div id="footer-right">
 <ul>
-<li><a href="#">ABOUT</a></li>
+<li><a href="#about">ABOUT</a></li>
 <li><a href="#">BLOG</a></li>
 <li><a href="#">CREATORS</a></li>
 <li><a href="#">WORKS</a></li>

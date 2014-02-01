@@ -26,24 +26,22 @@ if(isset($_POST["register"])){
 					// パスワードの暗号化
 					$password = md5($password);
 					$repeatpassword = md5($repeatpassword);
-		
-					$connection = mysqli_connect('localhost', 'root', 'root');
-					mysqli_set_charset($connection, 'utf8');
-					mysqli_select_db($connection, 'job');
 
 					$check = "select * from users where username='$username'";
-					$check = mysqli_query($connection, $check);
-					$check_num_rows = mysqli_num_rows($check);
-					if($check_num_rows==null){
-							while ($row = mysqli_fetch_assoc($check)) {
-							    $_SESSION["id"] = $row["id"];
-							    $_SESSION["username"] = $row["username"];
-							    $_SESSION["password"] = $row["password"];
+					$result = mysqli_query($connection, $check);
+					$check_num_rows = mysqli_num_rows($result);
+					if($check_num_rows===0){
+						$query = "insert into users (user_id,username,password, created_date,profile,portfolio_url) values (
+							'', '$username','$password', '$date','','')";
+						mysqli_query($connection, $query);
+						if($result = mysqli_query($connection, $check)){
+							while ($row = mysqli_fetch_assoc($result)) {
+								$_SESSION["username"] = $row["username"];
+								$_SESSION["user_id"] = $row["user_id"];
 							}
+						};	
 
-						$query = "insert into users values ('', '$username','$password', '$date','')";
-						mysqli_query($connection, $query);	
-						header('Location: http://localhost/job/index.php');
+						header('Location: http://localhost/tsucre/index.php');
 						exit();
 					} else {
 						
@@ -81,12 +79,12 @@ if(isset($_POST["login"])){
 			// 入力されたユーザ名に対するパスワードが合っているかチェック
 
 			while ($row = mysqli_fetch_assoc($result)) {
-			    $_SESSION["id"] = $checkId = $row["id"];
+			    $_SESSION["user_id"] = $checkId = $row["user_id"];
 			    $_SESSION["username"] = $checkUsername = $row["username"];
 			    $_SESSION["password"] = $checkPassword = $row["password"];
 			}
 			if($password == $checkPassword){
-				header('Location: http://localhost/job/index.php');
+				header('Location: http://localhost/tsucre/index.php');
 			}
 
 		} else {

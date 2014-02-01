@@ -12,6 +12,6 @@ function user_exists($username){
 }
 
 function logged_in(){
-	return (isset($_SESSION["id"])) ? true : false;
+	return (isset($_SESSION["user_id"])) ? true : false;
 }
 ?>

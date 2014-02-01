@@ -3,8 +3,8 @@
 define('PROFILE_IMAGE_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads/profile_image/');
 define('ORIGINAL_IMAGE_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads/original_image/');
 define('BIG_THUMBNAIL_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads/big_thumbnail/');
-define('MIDDLE_THUMBNAIL_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads//middle_thumbnail/');
-define('SMALL_THUMBNAIL_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads//small_thumbnail/');
+define('MIDDLE_THUMBNAIL_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads/middle_thumbnail/');
+define('SMALL_THUMBNAIL_DIR', dirname($_SERVER['SCRIPT_FILENAME']).'/uploads/small_thumbnail/');
 
 define('PROFILE_IMAGE_WIDTH', 240); // profile image 240px
 define('BIG_THUMBNAIL_WIDTH', 480); // 480px
