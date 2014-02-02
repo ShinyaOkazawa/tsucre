@@ -75,45 +75,87 @@ function resizeImage($connection,$returnPage){
 	imagecopyresampled($thumbImage_middle, $srcImage, 0, 0, 0, 0, 240, $thumbHeight_middle, $width, $height);
 	imagecopyresampled($thumbImage_small, $srcImage, 0, 0, 0, 0, 220, $thumbHeight_small, $width, $height);
 
-	// 画像をファイルに出力する
-	switch($imagesize['mime']){
-	case 'image/gif':
-		imagegif($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagegif($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagegif($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
-		break;
-	case 'image/jpeg':
-		imagejpeg($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagejpeg($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagejpeg($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
-		break;
-	case 'image/png':
-		imagepng($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagepng($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
-		imagepng($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
-		break;
-	default:
-		echo "GIF/JPEG/PNG only!";
-		exit();
+	// mypageからの場合、profile画像生成
+	if($returnPage=="mypage.php"){
+
+		// 画像をファイルに出力する
+		switch($imagesize['mime']){
+		case 'image/gif':
+			imagegif($thumbImage_small, PROFILE_IMAGE_DIR. '/'.$imageFileName);
+			break;
+		case 'image/jpeg':
+			imagejpeg($thumbImage_small, PROFILE_IMAGE_DIR. '/'.$imageFileName);
+			break;
+		case 'image/png':
+			imagepng($thumbImage_small, PROFILE_IMAGE_DIR. '/'.$imageFileName);
+			break;
+		default:
+			echo "GIF/JPEG/PNG only!";
+			exit();
+		}
+
+		// DBへ保存するパスの生成
+		$imageFilePath_profile = "uploads/profile_image/".$imageFileName;
+		$imageFilePath_original = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
+
+		// image table にレコードを追加
+		$query = "insert into image (image_id, user_id, big_thumbnail, middle_thumbnail, small_thumbnail, original_image,profile_image, title) values (
+			'','$user_id','','','','$imageFilePath_original','$imageFilePath_profile','')";
+		mysqli_query($connection, $query);
+
+		// image table に最後に追加されたimage_idを取得
+		$query = 'select image_id from image where user_id = '.$user_id.' AND profile_image <> "" order by image_id desc limit 1';
+		$result = mysqli_query($connection, $query);
+		while($row = mysqli_fetch_assoc($result)){
+			$_SESSION["image_id"] = $row["image_id"];
+		}
 	}
 
-	// DBへ保存するパスの生成
-	$imageFilePath_big = "uploads/big_thumbnail/".$imageFileName;
-	$imageFilePath_middle = "uploads/middle_thumbnail/".$imageFileName;
-	$imageFilePath_small = "uploads/small_thumbnail/".$imageFileName;
-	$imageFilePath_original = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
+	// portfolioページからの場合
+	if($returnPage=="portfolio.php"){
 
-	// image table にレコードを追加
-	$query = "insert into image (image_id, user_id, big_thumbnail, middle_thumbnail, small_thumbnail, original_image) values (
-		'','$user_id','$imageFilePath_big','$imageFilePath_middle','$imageFilePath_small','$imageFilePath_original')";
-	mysqli_query($connection, $query);
+		// 画像をファイルに出力する
+		switch($imagesize['mime']){
+		case 'image/gif':
+			imagegif($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagegif($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagegif($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
+			break;
+		case 'image/jpeg':
+			imagejpeg($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagejpeg($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagejpeg($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
+			break;
+		case 'image/png':
+			imagepng($thumbImage_big, BIG_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagepng($thumbImage_middle, MIDDLE_THUMBNAIL_DIR. '/'.$imageFileName);
+			imagepng($thumbImage_small, SMALL_THUMBNAIL_DIR. '/'.$imageFileName);
+			break;
+		default:
+			echo "GIF/JPEG/PNG only!";
+			exit();
+		}
 
-	// image table に最後に追加されたimage_idを取得
-	$query = "select image_id from image order by image_id desc limit 1";
-	$result = mysqli_query($connection, $query);
-	while($row = mysqli_fetch_assoc($result)){
-		$_SESSION["image_id"] = $row["image_id"];
+		// DBへ保存するパスの生成
+		$imageFilePath_big = "uploads/big_thumbnail/".$imageFileName;
+		$imageFilePath_middle = "uploads/middle_thumbnail/".$imageFileName;
+		$imageFilePath_small = "uploads/small_thumbnail/".$imageFileName;
+		$imageFilePath_original = ORIGINAL_IMAGE_DIR . $_FILES['image']['name'];
+
+		if(isset($_POST["upload"])){
+
+			$_SESSION["work_title"] = $work_title = sanitize($_POST["work_title"]);
+
+			// image table にレコードを追加
+			$query = "insert into image (image_id, user_id, big_thumbnail, middle_thumbnail, small_thumbnail, original_image, profile_image, title) values (
+			'','$user_id','$imageFilePath_big','$imageFilePath_middle','$imageFilePath_small','$imageFilePath_original','','$work_title')";
+			
+			mysqli_query($connection, $query);
+		}
+		
+
 	}
+	
 	
 	header("Location: http://".$_SERVER['SERVER_NAME']."/tsucre/$returnPage");
 }

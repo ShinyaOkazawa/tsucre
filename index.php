@@ -5,13 +5,53 @@ require_once 'core/init.php';
 
 $user_id = $_SESSION['user_id'];
 
-$query = "select small_thumbnail from image where user_id = $user_id";
-$result = mysqli_query($connection, $query);
+$query = 'select users.username, image.user_id, image.small_thumbnail,image.title,image.image_id, votes.votes from users inner join image on users.user_id = image.user_id left outer join votes on image.image_id = votes.image_id;';
 
-$images = array();
-while($row = mysqli_fetch_assoc($result)){
-	$images[] = $row["small_thumbnail"];
+// showin username for testing
+echo $_SESSION["username"];
+
+if($result = $connection->query($query)){
+	if($result->num_rows){
+		while($rows = $result->fetch_object()){
+			$works[] = $rows;
+		}
+	}
 }
+
+if(!isset($_POST["vote"])){
+	// 投稿前
+
+	// CSRF対策
+	if(!isset($_SESSION['token'])){
+		$_SESSION['token'] = sha1(uniqid(mt_rand(), true));
+	}
+} else {
+	// 投稿後
+	if(empty($_POST['token']) | $_POST['token'] != $_SESSION['token']){
+		echo '不正な操作です。';
+		exit();
+	}
+	$imageId = $_POST["vote-hidden"];
+	$query = "select image_id from votes where image_id = $imageId";
+
+	$result = mysqli_query($connection, $query);
+	$check_num_rows = mysqli_num_rows($result);
+	if($check_num_rows === 0){
+		// votes tableにimage idがなかった場合、insert
+		$query = "insert into votes (vote_id, image_id, votes, remote_addr, user_agent, vote_date) values (
+		'','$imageId','1','','',cast(now() as date))";
+		mysqli_query($connection, $query);
+	} else {
+		// votes tableにimage idがあった場合、update
+		$query = "update votes set votes = votes+1, vote_date = cast(now() as date) where image_id = $imageId";
+		mysqli_query($connection, $query);
+	}
+
+}
+
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -451,13 +491,14 @@ while($row = mysqli_fetch_assoc($result)){
 <p>SEARCH</p>
 </div><!-- gadget -->
 <div class="work-wrapper">
-<div class="each-work">
 
+<?php foreach ($works as $work) : ?>
+
+<div class="each-work">
 <div class="float-left work">
 <div class="work-nth-menu">
 <div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
+<p class="work-nth-menu-title"><?php echo $work->title; ?></p>
 </div><!-- work-nth-menu-wrapper -->
 <div class="submenu-toggle">
 <div class="submenu-bars-wrapper">
@@ -470,13 +511,21 @@ while($row = mysqli_fetch_assoc($result)){
 <div class="work-nth-ovl">
 <div class="work-nth-votes">
 <p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
+<p class="work-nth-votes-number">
+<?php if(isset($work->votes)){echo $work->votes;}else{echo '0';}; ?>
+</p>
 </div><!-- work-nth-votes -->
 <div class="work-nth-creator">
 <p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
+<p class="work-nth-creator-name"><?php echo $work->username; ?></p>
 </div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
+<div class="votes-button">
+<form action="" method="post" id="vote-form">
+<input type="submit" name="vote" value="V" onClick="ajax_post(); ">
+<input type="hidden" class="vote-hidden" name="vote-hidden" value="<?php echo $work->image_id; ?>">
+<input type="hidden" name="token" value="<?php echo sanitize($_SESSION['token']); ?>">
+</form>
+</div>
 <div class="votes-button-hover"></div>
 <div class="work-ovl-sns-wrapper">
 <img src="images/i_fb_s_off.png" height="40" width="40">
@@ -484,269 +533,12 @@ while($row = mysqli_fetch_assoc($result)){
 <img src="images/i_pinterest_s_off.png" height="40" width="40">
 </div>
 </div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
+<img src="<?php echo $work->small_thumbnail; ?>" class="candidate" data-id="<?php echo $work->image_id; ?>">
 </div><!-- work -->
-
 </div><!-- each-work -->
-<div class="each-work">
 
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
+<?php endforeach; ?>
 
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
-<div class="each-work">
-
-<div class="float-left work">
-<div class="work-nth-menu">
-<div class="work-nth-menu-wrapper">
-<p class="work-nth-menu-date">#2</p>
-<p class="work-nth-menu-title">HEAVEN in the dark</p>
-</div><!-- work-nth-menu-wrapper -->
-<div class="submenu-toggle">
-<div class="submenu-bars-wrapper">
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-<div class="submenu-bars"></div>
-</div><!-- submenu-bars-wrapper -->
-</div><!-- submenu-toggle -->
-</div><!-- work-nth-menu -->
-<div class="work-nth-ovl">
-<div class="work-nth-votes">
-<p class="work-nth-votes-title">votes</p>
-<p class="work-nth-votes-number">13,040</p>
-</div><!-- work-nth-votes -->
-<div class="work-nth-creator">
-<p class="work-nth-creator-title">CREATOR</p>
-<p class="work-nth-creator-name">SHINYA OKAZAWA</p>
-</div><!-- work-nth-creator -->
-<div class="votes-button">V</div>
-<div class="votes-button-hover"></div>
-<div class="work-ovl-sns-wrapper">
-<img src="images/i_fb_s_off.png" height="40" width="40">
-<img src="images/i_google_s_off.png" height="40" width="40">
-<img src="images/i_pinterest_s_off.png" height="40" width="40">
-</div>
-</div><!-- work-nth-ovl -->
-<img src="images/second.jpg" height="220" width="220">
-</div><!-- work -->
-
-</div><!-- each-work -->
 </div><!-- work-wrapper -->
 <div id="creator-arrow-wrapper" class="double-arrow-wrapper clear-left">
 <a href=""><img class="double-arrow-left" src="images/double_arrow_left.png" height="19" width="27"></a>
@@ -754,27 +546,60 @@ while($row = mysqli_fetch_assoc($result)){
 </div><!-- creator-arrow-wrapper -->
 </section><!-- works -->
 
-<footer id="footer">
-<div id="footer-left">
-<div id="footer-logo">
-<a href="#"><h2>TSUCRE</h2></a>
-<img src="images/logo_footer.png" height="180" width="180">
-</div><!-- footer-logo -->
-</div><!-- footer-left -->
-<div id="footer-right">
-<ul>
-<li><a href="#about">ABOUT</a></li>
-<li><a href="#">BLOG</a></li>
-<li><a href="#">CREATORS</a></li>
-<li><a href="#">WORKS</a></li>
-<li><a href="#">MY PORTFOLIO</a></li>
-</ul>
-<p>CREDIT BY SOWORK DESIGN</p>
-</div>
-</footer>
+<?php include 'footer.php'; ?>
 </article>
 </div><!-- wrapper -->
 <script src="js/jquery-2.0.3.min.js"></script>
 <script src="js/main.js"></script>
+<script src="js/poll.js"></script>
+<script>
+$(function(){
+	$('.votes-button').click(function(){
+		$(this).find('.vote-hidden').val($(this).closest('.work').find('.candidate').data('id'));
+	});
+
+ // ajax setup
+  $.ajaxSetup({
+    url: 'ajaxvote.php',
+    type: 'POST',
+    cache: 'false'
+  });
+
+  // any voting button (up/down) clicked event
+  $('.vote').click(function(){
+    var self = $(this); // cache $this
+    var action = self.data('action'); // grab action data up/down 
+    var parent = self.parent().parent(); // grab grand parent .item
+    var postid = parent.data('postid'); // grab post id from data-postid
+    var score = parent.data('score'); // grab score form data-score
+
+    // only works where is no disabled class
+    if (!parent.hasClass('.disabled')) {
+      // vote up action
+      if (action == 'up') {
+        // increase vote score and color to orange
+        parent.find('.vote-score').html(++score).css({'color':'orange'});
+        // change vote up button color to orange
+        self.css({'color':'orange'});
+        // send ajax request with post id & action
+        $.ajax({data: {'postid' : postid, 'action' : 'up'}});
+      }
+      // voting down action
+      else if (action == 'down'){
+        // decrease vote score and color to red
+        parent.find('.vote-score').html(--score).css({'color':'red'});
+        // change vote up button color to red
+        self.css({'color':'red'});
+        // send ajax request
+        $.ajax({data: {'postid' : postid, 'action' : 'down'}});
+      };
+
+      // add disabled class with .item
+      parent.addClass('.disabled');
+    };
+  });
+});
+});
+</script>
 </body>
 </html>
